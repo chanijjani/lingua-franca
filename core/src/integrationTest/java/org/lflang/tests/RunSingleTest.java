@@ -37,6 +37,7 @@ import org.lflang.tests.runtime.CCppTest;
 import org.lflang.tests.runtime.CTest;
 import org.lflang.tests.runtime.CppTest;
 import org.lflang.tests.runtime.PythonTest;
+import org.lflang.tests.runtime.RustRtiTest;
 import org.lflang.tests.runtime.RustTest;
 import org.lflang.tests.runtime.TypeScriptTest;
 
@@ -90,6 +91,8 @@ public class RunSingleTest {
         return PythonTest.class;
       case Rust:
         return RustTest.class;
+      case RustRti:
+        return RustRtiTest.class;
       default:
         throw new IllegalArgumentException();
     }

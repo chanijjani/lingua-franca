@@ -383,6 +383,13 @@ public enum Target {
       // In our Rust implementation, the only reserved keywords
       // are those that are a valid expression. Others may be escaped
       // with the syntax r#keyword.
+      Arrays.asList("self", "true", "false")),
+  RustRti(
+      "RustRti",
+      true,
+      // In our Rust implementation, the only reserved keywords
+      // are those that are a valid expression. Others may be escaped
+      // with the syntax r#keyword.
       Arrays.asList("self", "true", "false"));
 
   /** String representation of this target. */
@@ -460,7 +467,7 @@ public enum Target {
   /** Return true if the target supports federated execution. */
   public boolean supportsFederated() {
     return switch (this) {
-      case C, CCPP, Python, TS -> true;
+      case C, CCPP, Python, TS, RustRti -> true;
       default -> false;
     };
   }
@@ -476,7 +483,7 @@ public enum Target {
   /** Return true if the target supports multiports and banks of reactors. */
   public boolean supportsMultiports() {
     return switch (this) {
-      case C, CCPP, CPP, Python, Rust, TS -> true;
+      case C, CCPP, CPP, Python, Rust, TS, RustRti -> true;
       default -> false;
     };
   }
@@ -501,7 +508,7 @@ public enum Target {
   public boolean buildsUsingDocker() {
     return switch (this) {
       case TS -> false;
-      case C, CCPP, CPP, Python, Rust -> true;
+      case C, CCPP, CPP, Python, Rust, RustRti -> true;
     };
   }
 
@@ -639,7 +646,7 @@ public enum Target {
           SingleThreadedProperty.INSTANCE,
           TracingProperty.INSTANCE,
           WorkersProperty.INSTANCE);
-      case Rust -> config.register(
+      case Rust, RustRti -> config.register(
           BuildTypeProperty.INSTANCE,
           CargoDependenciesProperty.INSTANCE,
           CargoFeaturesProperty.INSTANCE,
