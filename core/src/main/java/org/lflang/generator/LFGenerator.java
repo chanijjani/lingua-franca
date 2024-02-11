@@ -56,7 +56,7 @@ public class LFGenerator extends AbstractGenerator {
       }
 
       return switch (target) {
-        case CCPP, C -> new CFileConfig(resource, srcGenBasePath, useHierarchicalBin);
+        case CCPP, C, RustRti -> new CFileConfig(resource, srcGenBasePath, useHierarchicalBin);
         case Python -> new PyFileConfig(resource, srcGenBasePath, useHierarchicalBin);
         case CPP -> new CppFileConfig(resource, srcGenBasePath, useHierarchicalBin);
         case Rust -> new RustFileConfig(resource, srcGenBasePath, useHierarchicalBin);
@@ -82,6 +82,7 @@ public class LFGenerator extends AbstractGenerator {
       case CPP -> new CppGenerator(context, scopeProvider);
       case TS -> new TSGenerator(context);
       case Rust -> new RustGenerator(context, scopeProvider);
+      case RustRti -> new CGenerator(context, true);
     };
   }
 
@@ -103,6 +104,42 @@ public class LFGenerator extends AbstractGenerator {
         FedGenerator fedGenerator = new FedGenerator(lfContext);
         injector.injectMembers(fedGenerator);
         generatorErrorsOccurred = fedGenerator.doGenerate(resource, lfContext);
+      } catch (IOException e) {
+        throw new RuntimeIOException("Error during federated code generation", e);
+      }
+
+    } else {
+      final GeneratorBase generator = createGenerator(lfContext);
+
+      if (generator != null) {
+        generator.doGenerate(resource, lfContext);
+        generatorErrorsOccurred = generator.errorsOccurred();
+      }
+    }
+    final MessageReporter messageReporter = lfContext.getErrorReporter();
+    if (messageReporter instanceof LanguageServerMessageReporter) {
+      ((LanguageServerMessageReporter) messageReporter).publishDiagnostics();
+    }
+  }
+
+  public void doGenerateForRustRTI(
+      Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
+    assert injector != null;
+    final LFGeneratorContext lfContext;
+    if (context instanceof LFGeneratorContext) {
+      lfContext = (LFGeneratorContext) context;
+    } else {
+      lfContext = LFGeneratorContext.lfGeneratorContextOf(resource, fsa, context);
+    }
+
+    // The fastest way to generate code is to not generate any code.
+    if (lfContext.getMode() == LFGeneratorContext.Mode.LSP_FAST) return;
+
+    if (FedASTUtils.findFederatedReactor(resource) != null) {
+      try {
+        FedGenerator fedGenerator = new FedGenerator(lfContext);
+        injector.injectMembers(fedGenerator);
+        generatorErrorsOccurred = fedGenerator.doGenerateForRustRTI(resource, lfContext);
       } catch (IOException e) {
         throw new RuntimeIOException("Error during federated code generation", e);
       }
